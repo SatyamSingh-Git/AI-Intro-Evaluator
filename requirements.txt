@@ -1,0 +1,14 @@
+pandas
+openpyxl
+language-tool-python
+vaderSentiment
+spacy
+nltk
+textstat
+streamlit
+plotly
+sentence-transformers
+openai-whisper
+reportlab
+pydub
+speechrecognition
