@@ -682,11 +682,11 @@ in the Software without restriction...
 
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/SatyamSingh-Git)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/satyam-singh)
-[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:your.email@example.com)
+[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:theindianboy@gmail.com)
 
 ### 💬 Get Help
 
-- 📧 **Email**: your.email@example.com
+- 📧 **Email**: theindianboy555@gmail.com
 - 🐛 **Issues**: [GitHub Issues](https://github.com/SatyamSingh-Git/AI-Intro-Evaluator/issues)
 - 💡 **Discussions**: [GitHub Discussions](https://github.com/SatyamSingh-Git/AI-Intro-Evaluator/discussions)
 
