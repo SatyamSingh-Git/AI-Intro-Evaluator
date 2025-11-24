@@ -443,6 +443,16 @@ def evaluate_text(text, audio_duration=None):
     }
 
 def main():
+    # Initialize session state for storing results
+    if 'results' not in st.session_state:
+        st.session_state.results = None
+    if 'total_score' not in st.session_state:
+        st.session_state.total_score = None
+    if 'text_input' not in st.session_state:
+        st.session_state.text_input = None
+    if 'student_name' not in st.session_state:
+        st.session_state.student_name = ""
+    
     # Header
     st.markdown("""
         <div class="main-header">
@@ -490,13 +500,13 @@ def main():
         # Student name input
         student_name = st.text_input(
             "👤 Student Name (Optional)",
+            value=st.session_state.student_name,
             placeholder="Enter your name...",
             help="Your name will appear on the PDF report"
         )
         
-        # Store in session state for PDF generation
-        if student_name:
-            st.session_state['student_name'] = student_name
+        # Update session state
+        st.session_state.student_name = student_name
         
         # Input method selection
         input_method = st.radio("Choose input method:", ["✍️ Type/Paste Text", "📁 Upload File", "🎤 Upload Audio"], horizontal=True)
@@ -631,52 +641,63 @@ def main():
                     results['sentiment']['score']
                 )
                 
-                max_total = 100
-                
-                # Display total score
-                st.markdown("<br>", unsafe_allow_html=True)
-                st.markdown('<p class="section-header">🏆 Overall Score</p>', unsafe_allow_html=True)
-                
-                score_col1, score_col2, score_col3 = st.columns([1, 2, 1])
-                
-                with score_col2:
-                    st.markdown(f"""
-                        <div style='text-align: center; padding: 2rem; background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
-                            {get_score_badge(total_score, max_total)}
-                            <p style='margin-top: 1rem; color: #6B7280; font-size: 1.1rem;'>
-                                {'🌟 Excellent!' if total_score >= 85 else '✅ Good Job!' if total_score >= 70 else '⚠️ Room for Improvement' if total_score >= 50 else '❌ Needs Work'}
-                            </p>
-                        </div>
-                    """, unsafe_allow_html=True)
-                
-                # Gauge chart
-                st.plotly_chart(create_gauge_chart(total_score, max_total, "Overall Performance"), width="stretch")
-                
-                # Category breakdown
-                st.markdown('<p class="section-header">📊 Category Breakdown</p>', unsafe_allow_html=True)
-                
-                tab1, tab2, tab3 = st.tabs(["📈 Bar Chart", "🎯 Radar Chart", "📋 Detailed Scores"])
-                
-                categories = ["Salutation", "Keywords", "Flow", "Speech Rate", "Grammar", "Vocabulary", "Clarity", "Engagement"]
-                scores = [
-                    results['salutation']['score'],
-                    results['keywords']['score'],
-                    results['flow']['score'],
-                    results['speech_rate']['score'],
-                    results['grammar']['score'],
-                    results['vocabulary']['score'],
-                    results['filler']['score'],
-                    results['sentiment']['score']
-                ]
-                max_scores = [5, 30, 5, 10, 10, 10, 15, 15]
-                
-                with tab1:
-                    st.plotly_chart(create_bar_chart(categories, scores, max_scores), width="stretch")
-                
-                with tab2:
-                    st.plotly_chart(create_radar_chart(categories, scores, max_scores), width="stretch")
-                
-                with tab3:
+                # Store in session state
+                st.session_state.results = results
+                st.session_state.total_score = total_score
+                st.session_state.text_input = text_input
+    
+    # Display results if they exist in session state
+    if st.session_state.results is not None:
+        results = st.session_state.results
+        total_score = st.session_state.total_score
+        text_input = st.session_state.text_input
+        
+        max_total = 100
+        
+        # Display total score
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown('<p class="section-header">🏆 Overall Score</p>', unsafe_allow_html=True)
+        
+        score_col1, score_col2, score_col3 = st.columns([1, 2, 1])
+        
+        with score_col2:
+            st.markdown(f"""
+                <div style='text-align: center; padding: 2rem; background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                    {get_score_badge(total_score, max_total)}
+                    <p style='margin-top: 1rem; color: #6B7280; font-size: 1.1rem;'>
+                        {'🌟 Excellent!' if total_score >= 85 else '✅ Good Job!' if total_score >= 70 else '⚠️ Room for Improvement' if total_score >= 50 else '❌ Needs Work'}
+                    </p>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        # Gauge chart
+        st.plotly_chart(create_gauge_chart(total_score, max_total, "Overall Performance"), width="stretch")
+        
+        # Category breakdown
+        st.markdown('<p class="section-header">📊 Category Breakdown</p>', unsafe_allow_html=True)
+        
+        tab1, tab2, tab3 = st.tabs(["📈 Bar Chart", "🎯 Radar Chart", "📋 Detailed Scores"])
+        
+        categories = ["Salutation", "Keywords", "Flow", "Speech Rate", "Grammar", "Vocabulary", "Clarity", "Engagement"]
+        scores = [
+            results['salutation']['score'],
+            results['keywords']['score'],
+            results['flow']['score'],
+            results['speech_rate']['score'],
+            results['grammar']['score'],
+            results['vocabulary']['score'],
+            results['filler']['score'],
+            results['sentiment']['score']
+        ]
+        max_scores = [5, 30, 5, 10, 10, 10, 15, 15]
+        
+        with tab1:
+            st.plotly_chart(create_bar_chart(categories, scores, max_scores), width="stretch")
+        
+        with tab2:
+            st.plotly_chart(create_radar_chart(categories, scores, max_scores), width="stretch")
+        
+        with tab3:
                     # Detailed breakdown
                     st.markdown("#### 1. Content & Structure (30 points)")
                     
@@ -856,134 +877,134 @@ def main():
                         why_text = generate_why_explanation('sentiment', results['sentiment']['score'], 15, results['sentiment'])
                         st.markdown(why_text)
                 
-                # Semantic Similarity Analysis
-                st.markdown('<p class="section-header">🎯 Semantic Relevance Analysis</p>', unsafe_allow_html=True)
+        # Semantic Similarity Analysis
+        st.markdown('<p class="section-header">🎯 Semantic Relevance Analysis</p>', unsafe_allow_html=True)
+        
+        try:
+            from src.analyzers.semantic import SemanticAnalyzer
+            
+            with st.spinner("Analyzing semantic relevance..."):
+                semantic_analyzer = SemanticAnalyzer(text_input)
+                semantic_results = semantic_analyzer.analyze_relevance()
+                overall_semantic_score = semantic_analyzer.get_overall_score()
+            
+            # Display overall semantic coherence
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown(f"""
+                    <div class='metric-card'>
+                        <div class='metric-title'>Semantic Coherence</div>
+                        <div class='metric-value'>{overall_semantic_score:.2f}</div>
+                        <small>How relevant sentences are to introduction topics</small>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                # Count relevance levels
+                high_count = sum(1 for r in semantic_results if r['relevance'] == 'high')
+                medium_count = sum(1 for r in semantic_results if r['relevance'] == 'medium')
+                low_count = sum(1 for r in semantic_results if r['relevance'] == 'low')
                 
-                try:
-                    from src.analyzers.semantic import SemanticAnalyzer
-                    
-                    with st.spinner("Analyzing semantic relevance..."):
-                        semantic_analyzer = SemanticAnalyzer(text_input)
-                        semantic_results = semantic_analyzer.analyze_relevance()
-                        overall_semantic_score = semantic_analyzer.get_overall_score()
-                    
-                    # Display overall semantic coherence
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.markdown(f"""
-                            <div class='metric-card'>
-                                <div class='metric-title'>Semantic Coherence</div>
-                                <div class='metric-value'>{overall_semantic_score:.2f}</div>
-                                <small>How relevant sentences are to introduction topics</small>
-                            </div>
-                        """, unsafe_allow_html=True)
-                    
-                    with col2:
-                        # Count relevance levels
-                        high_count = sum(1 for r in semantic_results if r['relevance'] == 'high')
-                        medium_count = sum(1 for r in semantic_results if r['relevance'] == 'medium')
-                        low_count = sum(1 for r in semantic_results if r['relevance'] == 'low')
-                        
-                        st.markdown(f"""
-                            <div class='metric-card'>
-                                <div class='metric-title'>Sentence Breakdown</div>
-                                <div class='metric-value'>
-                                    <span style='color: #10B981;'>●</span> {high_count} 
-                                    <span style='color: #F59E0B;'>●</span> {medium_count} 
-                                    <span style='color: #EF4444;'>●</span> {low_count}
-                                </div>
-                                <small>High / Medium / Low relevance</small>
-                            </div>
-                        """, unsafe_allow_html=True)
-                    
-                    # Display highlighted text
-                    with st.expander("📝 View Sentence-by-Sentence Analysis", expanded=True):
-                        st.markdown("**Color Legend:** <span style='color: #10B981;'>● High relevance</span> | <span style='color: #F59E0B;'>● Medium relevance</span> | <span style='color: #EF4444;'>● Low relevance</span>", unsafe_allow_html=True)
-                        st.markdown("<br>", unsafe_allow_html=True)
-                        
-                        highlighted_html = semantic_analyzer.get_highlighted_text()
-                        st.markdown(highlighted_html, unsafe_allow_html=True)
-                        
-                        st.markdown("<br><small><i>💡 Hover over sentences to see exact relevance scores</i></small>", unsafe_allow_html=True)
-                    
-                    # Detailed sentence scores
-                    with st.expander("📊 Detailed Sentence Scores"):
-                        for i, result in enumerate(semantic_results, 1):
-                            relevance_emoji = {'high': '✅', 'medium': '⚠️', 'low': '❌'}[result['relevance']]
-                            st.markdown(f"""
-                                <div style='padding: 8px; margin: 4px 0; background: {result['color']}20; border-left: 3px solid {result['color']}; border-radius: 4px;'>
-                                    {relevance_emoji} <b>Sentence {i}:</b> "{result['sentence']}"<br>
-                                    <small>Relevance Score: {result['score']:.3f} ({result['relevance'].upper()})</small>
-                                </div>
-                            """, unsafe_allow_html=True)
+                st.markdown(f"""
+                    <div class='metric-card'>
+                        <div class='metric-title'>Sentence Breakdown</div>
+                        <div class='metric-value'>
+                            <span style='color: #10B981;'>●</span> {high_count} 
+                            <span style='color: #F59E0B;'>●</span> {medium_count} 
+                            <span style='color: #EF4444;'>●</span> {low_count}
+                        </div>
+                        <small>High / Medium / Low relevance</small>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            # Display highlighted text
+            with st.expander("📝 View Sentence-by-Sentence Analysis", expanded=True):
+                st.markdown("**Color Legend:** <span style='color: #10B981;'>● High relevance</span> | <span style='color: #F59E0B;'>● Medium relevance</span> | <span style='color: #EF4444;'>● Low relevance</span>", unsafe_allow_html=True)
+                st.markdown("<br>", unsafe_allow_html=True)
                 
-                except ImportError:
-                    st.info("📦 Semantic analysis requires `sentence-transformers`. Install it to enable this feature.")
-                except Exception as e:
-                    st.warning(f"⚠️ Could not perform semantic analysis: {str(e)}")
+                highlighted_html = semantic_analyzer.get_highlighted_text()
+                st.markdown(highlighted_html, unsafe_allow_html=True)
                 
-                # Comprehensive Feedback with AI-powered suggestions
-                st.markdown('<p class="section-header">💡 Actionable Feedback & Recommendations</p>', unsafe_allow_html=True)
-                
-                # Generate comprehensive feedback
-                all_feedback = generate_comprehensive_feedback(results)
-                
-                # Organize feedback by severity
-                feedback_data = {
-                    'high_priority': [f for f in all_feedback if f['severity'] == 'high'],
-                    'medium_priority': [f for f in all_feedback if f['severity'] == 'medium'],
-                    'low_priority': [f for f in all_feedback if f['severity'] == 'low']
-                }
-                
-                # High priority feedback
-                if feedback_data['high_priority']:
-                    st.markdown("**🔴 High Priority Issues:**")
-                    for item in feedback_data['high_priority']:
-                        st.markdown(f"""
-                            <div class='error-box'>
-                                <strong>{item['category']}:</strong> {item['issue']}<br>
-                                <small>💡 <em>{item['suggestion']}</em></small>
-                            </div>
-                        """, unsafe_allow_html=True)
-                
-                # Medium priority feedback
-                if feedback_data['medium_priority']:
-                    st.markdown("**🟡 Medium Priority Improvements:**")
-                    for item in feedback_data['medium_priority']:
-                        st.markdown(f"""
-                            <div class='warning-box'>
-                                <strong>{item['category']}:</strong> {item['issue']}<br>
-                                <small>💡 <em>{item['suggestion']}</em></small>
-                            </div>
-                        """, unsafe_allow_html=True)
-                
-                # Low priority feedback
-                if feedback_data['low_priority']:
-                    with st.expander("🟢 Low Priority Suggestions"):
-                        for item in feedback_data['low_priority']:
-                            st.markdown(f"""
-                                <div class='info-box'>
-                                    <strong>{item['category']}:</strong> {item['issue']}<br>
-                                    <small>💡 <em>{item['suggestion']}</em></small>
-                                </div>
-                            """, unsafe_allow_html=True)
-                
-                # Success message if all good
-                if not feedback_data['high_priority'] and not feedback_data['medium_priority']:
-                    st.markdown("""
-                        <div class='success-box'>
-                            ✨ Excellent work! Your introduction is well-structured and engaging.
+                st.markdown("<br><small><i>💡 Hover over sentences to see exact relevance scores</i></small>", unsafe_allow_html=True)
+            
+            # Detailed sentence scores
+            with st.expander("📊 Detailed Sentence Scores"):
+                for i, result in enumerate(semantic_results, 1):
+                    relevance_emoji = {'high': '✅', 'medium': '⚠️', 'low': '❌'}[result['relevance']]
+                    st.markdown(f"""
+                        <div style='padding: 8px; margin: 4px 0; background: {result['color']}20; border-left: 3px solid {result['color']}; border-radius: 4px;'>
+                            {relevance_emoji} <b>Sentence {i}:</b> "{result['sentence']}"<br>
+                            <small>Relevance Score: {result['score']:.3f} ({result['relevance'].upper()})</small>
                         </div>
                     """, unsafe_allow_html=True)
-                
-                # Download report
-                st.markdown('<p class="section-header">📥 Download Report</p>', unsafe_allow_html=True)
-                
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    # Text report
-                    report_text = f"""AI Intro Evaluator Report
+        
+        except ImportError:
+            st.info("📦 Semantic analysis requires `sentence-transformers`. Install it to enable this feature.")
+        except Exception as e:
+            st.warning(f"⚠️ Could not perform semantic analysis: {str(e)}")
+        
+        # Comprehensive Feedback with AI-powered suggestions
+        st.markdown('<p class="section-header">💡 Actionable Feedback & Recommendations</p>', unsafe_allow_html=True)
+        
+        # Generate comprehensive feedback
+        all_feedback = generate_comprehensive_feedback(results)
+        
+        # Organize feedback by severity
+        feedback_data = {
+            'high_priority': [f for f in all_feedback if f['severity'] == 'high'],
+            'medium_priority': [f for f in all_feedback if f['severity'] == 'medium'],
+            'low_priority': [f for f in all_feedback if f['severity'] == 'low']
+        }
+        
+        # High priority feedback
+        if feedback_data['high_priority']:
+            st.markdown("**🔴 High Priority Issues:**")
+            for item in feedback_data['high_priority']:
+                st.markdown(f"""
+                    <div class='error-box'>
+                        <strong>{item['category']}:</strong> {item['issue']}<br>
+                        <small>💡 <em>{item['suggestion']}</em></small>
+                    </div>
+                """, unsafe_allow_html=True)
+        
+        # Medium priority feedback
+        if feedback_data['medium_priority']:
+            st.markdown("**🟡 Medium Priority Improvements:**")
+            for item in feedback_data['medium_priority']:
+                st.markdown(f"""
+                    <div class='warning-box'>
+                        <strong>{item['category']}:</strong> {item['issue']}<br>
+                        <small>💡 <em>{item['suggestion']}</em></small>
+                    </div>
+                """, unsafe_allow_html=True)
+        
+        # Low priority feedback
+        if feedback_data['low_priority']:
+            with st.expander("🟢 Low Priority Suggestions"):
+                for item in feedback_data['low_priority']:
+                    st.markdown(f"""
+                        <div class='info-box'>
+                            <strong>{item['category']}:</strong> {item['issue']}<br>
+                            <small>💡 <em>{item['suggestion']}</em></small>
+                        </div>
+                    """, unsafe_allow_html=True)
+        
+        # Success message if all good
+        if not feedback_data['high_priority'] and not feedback_data['medium_priority']:
+            st.markdown("""
+                <div class='success-box'>
+                    ✨ Excellent work! Your introduction is well-structured and engaging.
+                </div>
+            """, unsafe_allow_html=True)
+        
+        # Download report
+        st.markdown('<p class="section-header">📥 Download Report</p>', unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Text report
+            report_text = f"""AI Intro Evaluator Report
 {'='*50}
 
 OVERALL SCORE: {total_score}/100
@@ -1010,42 +1031,42 @@ Speech Rate: {results['speech_rate']['wpm']:.0f} WPM
 Actionable Feedback:
 {'-'*50}
 """
-                    for category in ['high_priority', 'medium_priority', 'low_priority']:
-                        if feedback_data[category]:
-                            priority_label = category.replace('_', ' ').title()
-                            report_text += f"\n{priority_label}:\n"
-                            for item in feedback_data[category]:
-                                report_text += f"- {item['category']}: {item['issue']}\n  → {item['suggestion']}\n"
-                    
-                    st.download_button(
-                        label="📄 Download Text Report",
-                        data=report_text,
-                        file_name=f"ai_intro_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                        mime="text/plain",
-                        use_container_width=True
-                    )
+            for category in ['high_priority', 'medium_priority', 'low_priority']:
+                if feedback_data[category]:
+                    priority_label = category.replace('_', ' ').title()
+                    report_text += f"\n{priority_label}:\n"
+                    for item in feedback_data[category]:
+                        report_text += f"- {item['category']}: {item['issue']}\n  → {item['suggestion']}\n"
+            
+            st.download_button(
+                label="📄 Download Text Report",
+                data=report_text,
+                file_name=f"ai_intro_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
+        
+        with col2:
+            # PDF report
+            try:
+                pdf_bytes = generate_pdf_report(
+                    student_name=st.session_state.get('student_name', 'Student'),
+                    text_input=text_input,
+                    results=results,
+                    total_score=total_score
+                )
                 
-                with col2:
-                    # PDF report
-                    try:
-                        pdf_bytes = generate_pdf_report(
-                            student_name=st.session_state.get('student_name', 'Student'),
-                            text_input=text_input,
-                            results=results,
-                            total_score=total_score
-                        )
-                        
-                        st.download_button(
-                            label="📕 Download PDF Report",
-                            data=pdf_bytes,
-                            file_name=f"ai_intro_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
-                            mime="application/pdf",
-                            use_container_width=True
-                        )
-                    except ImportError:
-                        st.info("PDF generation requires `reportlab`. Install it to enable PDF downloads.")
-                    except Exception as e:
-                        st.error(f"PDF generation error: {str(e)}")
+                st.download_button(
+                    label="📕 Download PDF Report",
+                    data=pdf_bytes,
+                    file_name=f"ai_intro_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+            except ImportError:
+                st.info("PDF generation requires `reportlab`. Install it to enable PDF downloads.")
+            except Exception as e:
+                st.error(f"PDF generation error: {str(e)}")
 
 if __name__ == "__main__":
     main()
